@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from fastapi import FastAPI, Query, Depends
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 from LangSegment import LangSegment
@@ -30,6 +31,13 @@ class Speaker(BaseModel):
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins="*",  # *：代表所有客户端
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 chat = ChatTTS.Chat()
 args = None
