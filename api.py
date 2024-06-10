@@ -59,7 +59,7 @@ def infer(texts, spk="random"):
     else:
         spk_emb = speaker[spk]
     params_infer_code = {'spk_emb': spk_emb, }
-    yield wave_header_chunk()
+    # yield wave_header_chunk()
     for text in texts:
         audio_data = chat.infer(text, use_decoder=True,
                                 skip_refine_text=True,
