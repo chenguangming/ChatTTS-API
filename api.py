@@ -62,6 +62,7 @@ def infer(texts, spk="random"):
     yield wave_header_chunk()
     for text in texts:
         audio_data = chat.infer(text, use_decoder=True,
+                                skip_refine_text=True,
                                 params_infer_code=params_infer_code,
                                 do_text_normalization=False)[0]
         audio_data = audio_data / np.max(np.abs(audio_data))
@@ -77,21 +78,26 @@ def tts_handle(params: TTS):
     # 主要是为了格式化一下数字和一些文字的读法
 
     # 将长文本分割成短文本,最好就用cut2
-    texts = text_split_registry[params.text_split_method](params.text)
-    text_list = []
-    for text in texts:
-        for tmp in LangSegment.getTexts(text):
-            normalize = text_normalize(tmp.get("text"))
-            logger.debug(f"{tmp} {normalize}")
-            if normalize != "" and tmp.get("lang") == "en" and normalize not in ["."]:
-                if len(text_list) > 0:
-                    text_list[-1] += normalize
-                else:
+    if len(params.text) > 30:
+        texts = text_split_registry[params.text_split_method](params.text)
+
+        text_list = []
+        for text in texts:
+            for tmp in LangSegment.getTexts(text):
+                normalize = text_normalize(tmp.get("text"), tmp.get("lang") == "en")
+                logger.debug(f"{tmp} {normalize}")
+                if normalize != "" and tmp.get("lang") == "en" and normalize not in ["."]:
+                    if len(text_list) > 0:
+                        text_list[-1] += normalize
+                    else:
+                        text_list.append(normalize)
+                elif tmp.get("lang") == "zh":
                     text_list.append(normalize)
-            elif tmp.get("lang") == "zh":
-                text_list.append(normalize)
-            else:
-                text_list.append(tmp.get("text"))
+                else:
+                    text_list.append(tmp.get("text"))
+    else:
+        text_list = [params.text]
+
     wavs = infer(text_list, params.spk)
     logger.debug(text_list)
     return StreamingResponse(wavs, media_type="audio/wav")

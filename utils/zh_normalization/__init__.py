@@ -32,12 +32,15 @@ rep_map = {
 }
 
 
-def replace_punctuation(text):
+def replace_punctuation(text, is_english):
     text = text.replace("嗯", "恩").replace("呣", "母")
     pattern = re.compile("|".join(re.escape(p) for p in rep_map.keys()))
 
     replaced_text = pattern.sub(lambda x: rep_map[x.group()], text)
     punctuation = ["!", "?", "…", ",", "."]
+    if is_english:
+        return replaced_text
+
     replaced_text = re.sub(
         r"[^\u4e00-\u9fa5" + "".join(punctuation) + r"]+", "", replaced_text
     )
@@ -45,11 +48,11 @@ def replace_punctuation(text):
     return replaced_text
 
 
-def text_normalize(text):
+def text_normalize(text, is_english = False):
     # https://github.com/PaddlePaddle/PaddleSpeech/tree/develop/paddlespeech/t2s/frontend/zh_normalization
     tx = TextNormalizer()
     sentences = tx.normalize(text)
     dest_text = ""
     for sentence in sentences:
-        dest_text += replace_punctuation(sentence)
+        dest_text += replace_punctuation(sentence, is_english)
     return dest_text
